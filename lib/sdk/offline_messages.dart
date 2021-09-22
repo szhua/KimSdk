@@ -32,7 +32,7 @@ class OfflineMessages {
         message.sender = idx.accountB;
         message.receiver = cli.account;
       }
-      if (idx.group == null || idx.group.isEmpty) {
+      if (idx.group != null && idx.group.isNotEmpty) {
         if (!offlineMsgs.groupMessages.containsKey(idx.group)) {
           offlineMsgs.groupMessages[idx.group] = List<Message>.empty(growable: true);
         }
@@ -89,7 +89,7 @@ class OfflineMessages {
     }
     var msgs = messages.sublist(start, end);
 
-    var contents = await _loadContent(msgs.map((e) => e.messageId));
+    var contents = await _loadContent(msgs.map((e) => e.messageId).toList());
 
     if (contents.status != Status.Success.value) {
       return [];
@@ -104,15 +104,14 @@ class OfflineMessages {
 
     ///处理信息；
     contents.data.forEach((content) {
-      if (msgMap.containsKey(content.messageId)) {
-        var msg = msgMap[content.messageId];
+      if (msgMap.containsKey(content.messageId.toInt())) {
+        var msg = msgMap[content.messageId.toInt()];
         msg.body = content.body;
         msg.extra = content.extra;
         msg.type = content.type;
       }
     });
-
-    return messages;
+    return msgMap.values.toList();
   }
 
   ///加载信息内容（根据msgIds）

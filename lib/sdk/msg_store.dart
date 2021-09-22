@@ -165,7 +165,7 @@ class MsgStore {
   ///获得同步id；
   Future<int> lastId() async {
     var box = await Hive.openBox<int>(msgBoxAckVersion);
-    var msg = box.get(keyLast());
+    var msg = box.get(keyLast(), defaultValue: -1);
     return msg;
   }
 

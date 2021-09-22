@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:kim/kim.dart';
 import 'package:kim/proto/protocol.pbserver.dart';
+import 'package:kim/sdk/msg_store.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,6 +16,9 @@ class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
 }
+
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2MiOiJzemh1YSIsImFwcCI6ImtpbSIsImV4cCI6MTYzMjM3OTk5NX0"
+    ".JI73gI07FGCKnXGSYEfJ5mnDme0yfoD_1mqwRItHxr4";
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
@@ -34,8 +38,20 @@ class _MyAppState extends State<MyApp> {
 
       var req = LoginReq();
       req.tags.add("flutter");
-      req.token = "qq";
+      req.token = token;
       Kim.loginReq = req;
+
+      Kim.offlineMessageCallBack = (res) async {
+        var users = res.listUsers();
+        var groups = res.listGroups();
+        print(users);
+        if (users.isNotEmpty) {
+          var messages = await res.listUserMessages(users[0], 1);
+          messages.forEach((element) {
+            print(element.toJson());
+          });
+        }
+      };
       var res = await Kim.init();
       if (res.errorResp != null) {
         log(res.errorResp.message);
@@ -62,8 +78,13 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
-        ),
+            child: TextButton(
+          child: Text("www"),
+          onPressed: () async {
+            var id = await store.lastId();
+            print(id);
+          },
+        )),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:fixnum/fixnum.dart';
 import 'package:kim/channel/src/channel.dart';
@@ -91,10 +92,15 @@ class KimClient {
       return KimInnerResponse(-1, null, ErrorResp()..message = "loginReq is null ");
     }
 
-    offlineMessageCallBack = (msgs) {};
-    messageCallBack = (msg) {};
+    if (offlineMessageCallBack == null) {
+      offlineMessageCallBack = (msgs) {};
+    }
+    if (messageCallBack == null) {
+      messageCallBack = (msg) {};
+    }
 
     store.initMsgStore();
+
     _state = KimState.CONNECTING;
 
     ///进行登录操作；（登录创建了webSocket的channel，并自定义了一个stream进行接收下面的事件）
@@ -136,6 +142,12 @@ class KimClient {
       _state = KimState.INIT;
       return KimInnerResponse(-1, false, ErrorResp()..message = "链接出现错误");
     }
+
+    ///验证失败；
+    if (loginRes.channelId == null || loginRes.account == null) {
+      return KimInnerResponse(-1, false, ErrorResp()..message = loginRes.errorMsg);
+    }
+
     channelId = loginRes.channelId;
     account = loginRes.account;
 
@@ -325,8 +337,8 @@ class KimClient {
     }
   }
 
-  Future<KimInnerResponse<MessageIndexResp>> _loadIndex({int messageId: 0}) async {
-    var indexReq = MessageIndexReq.create()..messageId = messageId as Int64;
+  Future<KimInnerResponse<MessageIndexResp>> _loadIndex({int messageId: -1}) async {
+    var indexReq = MessageIndexReq.create()..messageId = Int64.parseInt(messageId.toString());
     var logicPkt = LogicPkt.build(Command.offlineIndex, null, payload: indexReq.writeToBuffer());
     var resp = await this.request(logicPkt);
     if (resp.status != Status.Success.value) {
@@ -340,6 +352,7 @@ class KimClient {
   void _loadOfflineMessage() async {
     var offlineMessages = List<MessageIndex>.empty(growable: true);
     var msgId = await store.lastId();
+
     while (true) {
       var resp = await _loadIndex(messageId: msgId);
       if (resp.status != Status.Success.value) {
@@ -352,10 +365,9 @@ class KimClient {
       ///超出的情况下，再进行查询；
       msgId = resp.data.indexes[resp.data.indexes.length - 1].messageId.toInt();
       offlineMessages.addAll(resp.data.indexes);
-
-      OfflineMessages messages = OfflineMessages.build(this, offlineMessages);
-      offlineMessageCallBack(messages);
     }
+    OfflineMessages messages = OfflineMessages.build(this, offlineMessages);
+    offlineMessageCallBack(messages);
   }
 
   ///登出；
@@ -396,7 +408,7 @@ class KimClient {
       if (!overflow && diff < delay) {
         await Future.delayed(Duration(milliseconds: 500));
       }
-      var req = MessageAckReq.create()..messageId = msg.messageId as Int64;
+      var req = MessageAckReq.create()..messageId = Int64.parseInt(msg.messageId.toString());
       var logicPkt = LogicPkt.build(Command.chatTalkAck, "", payload: req.writeToBuffer());
       this._send(logicPkt.bytes());
       await store.setAck(msg.messageId);
