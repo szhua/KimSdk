@@ -16,8 +16,12 @@ typedef MessageCallBack(Message message);
 
 typedef OfflineMessageCallBack(OfflineMessages messages);
 
-const heartbeatInterval = 10; // seconds
-const sendTimeout = 5 * 1000; // 10 seconds
+const heartbeatInterval = 10;
+
+/// seconds
+const sendTimeout = 10 * 1000;
+
+///5 seconds
 
 class KimStatus {
   static final requestTimeout = 10;
@@ -240,15 +244,18 @@ class KimClient {
   ///请求 （双全工变为状态通讯）
   Future<KimResponse> request(LogicPkt data) async {
     Completer<KimResponse> completer = new Completer();
-    var timer = new Timer(Duration(milliseconds: sendTimeout), () {
+
+    ///TimeoUt
+    var timer = Timer(Duration(milliseconds: sendTimeout), () {
       if (!completer.isCompleted) {
         this._requests.remove(data.sequence);
         completer.complete(KimResponse(status: KimStatus.requestTimeout));
       }
     });
+
+    ///请求实例；
     var request = KimRequest(data, call: (res) {
       timer.cancel();
-      timer = null;
 
       ///没有完成进行回掉；
       if (!completer.isCompleted) {
@@ -256,6 +263,7 @@ class KimClient {
       }
     });
 
+    ///放入map，回调使用；
     this._requests[data.sequence] = request;
 
     ///发送失败；
