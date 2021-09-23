@@ -5,7 +5,9 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:kim/kim.dart';
+import 'package:kim/pkt/packet.dart';
 import 'package:kim/proto/protocol.pbserver.dart';
+import 'package:kim/sdk/kim_sdk.dart';
 import 'package:kim/sdk/msg_store.dart';
 
 void main() {
@@ -79,10 +81,10 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
             child: TextButton(
-          child: Text("www"),
+          child: Text("TestChat"),
           onPressed: () async {
-            var id = await store.lastId();
-            print(id);
+            var res = await Kim.talk2User(TalkContent(MessageType.text, "thissss", "ww"), "lei", 2);
+            print(res.resp);
           },
         )),
       ),

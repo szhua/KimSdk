@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-import 'dart:ui';
 import 'package:hive/hive.dart';
 import 'package:kim/generated/json/base/json_convert_content.dart';
 import 'package:kim/sdk/kim_sdk.dart';
@@ -78,7 +77,7 @@ class Message with JsonConvert<Message> {
     Message message = Message();
     message.messageId = messageId;
     message.sendTime = sendTime;
-    message.arriveTime = DateTime.now().millisecond;
+    message.arriveTime = DateTime.now().millisecondsSinceEpoch;
     return message;
   }
 }
@@ -147,7 +146,7 @@ class MsgStore {
 
   ///是否存在
   Future<bool> exist(int id) async {
-    var box = await Hive.openBox(msgBoxVersion);
+    var box = await Hive.openBox<Message>(msgBoxVersion);
     return box.containsKey(keyMsg(id));
   }
 

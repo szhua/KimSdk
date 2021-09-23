@@ -8,6 +8,7 @@ import 'package:kim/sdk/kim_sdk.dart';
 
 import 'msg_store.dart';
 
+///登录回调实例；
 class LoginCallBack {
   WebSocketChannel channel;
   String channelId;
@@ -67,7 +68,11 @@ class Login {
       if (logic.status != Status.Success) {
         channel.sink.close();
         controller.close();
-        completer.complete(LoginCallBack(channel, null, null, controller.stream)..errorMsg = "login verify failed");
+        if (logic.status == Status.Status_ServiceNotFound) {
+          completer.complete(LoginCallBack(channel, null, null, controller.stream)..errorMsg = "ChatServiceNotFound");
+        } else {
+          completer.complete(LoginCallBack(channel, null, null, controller.stream)..errorMsg = "login verify failed");
+        }
       } else {
         ///执行登录；
         var loginResp = LoginResp.fromBuffer(logic.payload);

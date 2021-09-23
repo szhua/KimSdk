@@ -54,8 +54,9 @@ class MessageType {
 }
 
 ///魔数 和server端一一对应
+// ignore: non_constant_identifier_names
 final Ping = Uint8List.fromList(magicBasicPkt + Uint8List.fromList([0, 1, 0, 0]));
-
+// ignore: non_constant_identifier_names
 final Pong = Uint8List.fromList(magicBasicPkt + Uint8List.fromList([0, 2, 0, 0]));
 
 var emptyUint8List = Uint8List.fromList([]);
@@ -88,7 +89,9 @@ class LogicPkt with JsonConvert<LogicPkt> {
   static LogicPkt from(Uint8List buff) {
     ByteDataReader reader = ByteDataReader()..add(buff);
     var magicInt = reader.readInt32();
-    if (magicInt == magicLogicPktInt) {}
+    if (magicInt != magicLogicPktInt) {
+      return LogicPkt();
+    }
     var headerLen = reader.readInt32();
     var header = Header.fromBuffer(reader.read(headerLen));
 

@@ -49,7 +49,7 @@ class KimRequest {
   int sendTime;
   LogicPkt data;
   KimRequestCall call = (LogicPkt res) {};
-  KimRequest(this.data, {this.call}) : sendTime = DateTime.now().millisecond;
+  KimRequest(this.data, {this.call}) : sendTime = DateTime.now().millisecondsSinceEpoch;
 }
 
 class KimClient {
@@ -57,7 +57,7 @@ class KimClient {
   MessageCallBack messageCallBack;
   Function closeCallBack;
 
-  int _lastRead = DateTime.now().millisecond;
+  int _lastRead = DateTime.now().millisecondsSinceEpoch;
   String channelId;
   String account;
   WebSocketChannel _channel;
@@ -120,7 +120,7 @@ class KimClient {
 
       /// bufferarray ；（binarray）
       if (msg.runtimeType == Uint8List || msg.runtimeType.toString() == "_Uint8ArrayView") {
-        _lastRead = DateTime.now().millisecond;
+        _lastRead = DateTime.now().millisecondsSinceEpoch;
         Uint8List buffer;
         if (msg.runtimeType.toString() == "_Uint8ArrayView") {
           buffer = Uint8List.fromList(msg);
@@ -144,8 +144,11 @@ class KimClient {
     }
 
     ///验证失败；登录超时,(已经创建链接但是后续失败)
-    if (loginRes.channelId == null || loginRes.account == null) {
-      return KimInnerResponse(-1, false, ErrorResp()..message = loginRes.errorMsg);
+    if (loginRes.channelId == null ||
+        loginRes.account == null ||
+        loginRes.channelId.isEmpty ||
+        loginRes.account.isEmpty) {
+      return KimInnerResponse(-1, false, ErrorResp()..message = loginRes.errorMsg ?? "connecting failed");
     }
 
     channelId = loginRes.channelId;
@@ -186,17 +189,17 @@ class KimClient {
 
   ///设置读超时；
   void _readDeadLineLoop() {
-    Timer timer;
-    if (state != KimState.CONNECTED) {
-      print("readDeadLineLoop exited");
-      if (timer != null) {
-        timer.cancel();
-        timer = null;
+    Timer.periodic(Duration(seconds: heartbeatInterval), (timer) {
+      if (state != KimState.CONNECTED) {
+        print("readDeadLineLoop exited");
+        if (timer != null) {
+          timer.cancel();
+          timer = null;
+        }
+        return;
       }
-      return;
-    }
-    timer = Timer.periodic(Duration(seconds: heartbeatInterval), (timer) {
-      if (DateTime.now().millisecond - _lastRead >= heartbeatInterval * 1000 * 3) {
+
+      if (DateTime.now().millisecondsSinceEpoch - _lastRead >= heartbeatInterval * 1000 * 3) {
         print("readTimeOut");
         _errorHandler(KimError("readTimeOut"));
       }
@@ -402,7 +405,7 @@ class KimClient {
       var msg = this._lastMessage;
       var overflow = this._unLack > 10;
       this._lastMessage = null;
-      var diff = DateTime.now().millisecond - msg.arriveTime;
+      var diff = DateTime.now().millisecondsSinceEpoch - msg.arriveTime;
 
       ///todo resolve  message3(arrive time) is before message2 and message1
       if (!overflow && diff < delay) {
