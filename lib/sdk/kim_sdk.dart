@@ -143,7 +143,7 @@ class KimClient {
       return KimInnerResponse(-1, false, ErrorResp()..message = "链接出现错误");
     }
 
-    ///验证失败；
+    ///验证失败；登录超时,(已经创建链接但是后续失败)
     if (loginRes.channelId == null || loginRes.account == null) {
       return KimInnerResponse(-1, false, ErrorResp()..message = loginRes.errorMsg);
     }

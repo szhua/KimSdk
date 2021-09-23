@@ -17,7 +17,6 @@ class OfflineMessages {
     var offlineMsgs = OfflineMessages()..client = cli;
 
     /// 整理消息；
-
     ///得倒着来；
     ixs.reversed.forEach((idx) {
       var message = Message.build(idx.messageId.toInt(), idx.sendTime.toInt());

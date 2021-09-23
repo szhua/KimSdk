@@ -17,6 +17,8 @@ class LoginCallBack {
   LoginCallBack(this.channel, this.channelId, this.account, this.stream);
 }
 
+const loginTimeout = 10; // 10 seconds
+
 class Login {
   static Future<LoginCallBack> doLogin(String wsUrl, LoginReq loginReq) async {
     Completer<LoginCallBack> completer = new Completer();
@@ -42,12 +44,21 @@ class Login {
 
     var loginFinished = false;
 
+    ///超时设置了；
+    var timer = Timer(Duration(seconds: loginTimeout), () {
+      return LoginCallBack(channel, null, null, controller.stream)..errorMsg = "Connection is Time Out";
+    });
+
     ///监听channel信息；
     channel.stream.listen((event) {
+      ///登录完成转接自己的stream；
       if (loginFinished) {
         controller.sink.add(event);
         return;
       }
+
+      ///取消超时；
+      timer.cancel();
 
       ///转换实体；
       var logic = LogicPkt.from(event);
